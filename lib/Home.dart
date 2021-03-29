@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_notas_diarias_sqlite/helper/Helper.dart';
 import 'package:flutter_notas_diarias_sqlite/model/Anotacao.dart';
 
@@ -77,14 +79,22 @@ class _Home extends State<Home> {
   }
 
   _registerAnotation() async {
-    Anotacao anotacao =
-        Anotacao(_title.text, _description.text, DateTime.now().toString());
+    Anotacao anotacao = Anotacao(_title.text, _description.text,
+        _formatedDate(DateTime.now().toString()));
     await _db.saveAnotations(anotacao);
     _title.clear();
     _description.clear();
     setState(() {
       myNotes.add(anotacao);
     });
+  }
+
+  _formatedDate(date) {
+    initializeDateFormatting("pt_BR");
+    var formater = DateFormat("y/M/d H:m:s");
+    DateTime converted = DateTime.parse(date);
+    String formatedDate = formater.format(converted);
+    return formatedDate;
   }
 
   @override
