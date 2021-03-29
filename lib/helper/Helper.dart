@@ -6,6 +6,11 @@ class Helper {
   String _sqlAnotacao =
       "CREATE TABLE anotation(id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR, description TEXT, data DATETIME)";
 
+  static final String columnId = 'id';
+  static final String columnTitle = 'title';
+  static final String columnDescription = 'description';
+  static final String columnData = 'data';
+
   static final Helper _helper = Helper._internal();
   Database _db;
 
@@ -37,9 +42,16 @@ class Helper {
     await db.execute(sql);
   }
 
-  Future<int> salvarAnotacao(Anotacao anotacao) async {
+  Future<int> saveAnotations(Anotacao anotacao) async {
     var dataBase = await db;
     int resultado = await dataBase.insert('anotation', anotacao.toMap());
     return resultado;
+  }
+
+  getAnotations() async {
+    var dataBase = await db;
+    String sql = "SELECT * FROM anotation ORDER BY data DESC";
+    List anotacoes = await dataBase.rawQuery(sql);
+    return anotacoes;
   }
 }

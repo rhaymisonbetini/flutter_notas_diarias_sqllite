@@ -8,7 +8,14 @@ class Home extends StatefulWidget {
 }
 
 class _Home extends State<Home> {
+  @override
+  void initState() {
+    super.initState();
+    _getAnotations();
+  }
+
   var _db = Helper();
+  List<Anotacao> myNotes = [];
 
   TextEditingController _title = TextEditingController();
   TextEditingController _description = TextEditingController();
@@ -57,11 +64,27 @@ class _Home extends State<Home> {
     );
   }
 
+  _getAnotations() async {
+    myNotes.clear();
+    List anotations = await _db.getAnotations();
+    List<Anotacao> tempList = [];
+    for (var item in anotations) {
+      Anotacao note = Anotacao.fromMap(item);
+      tempList.add(note);
+    }
+    myNotes = tempList;
+    tempList.clear();
+  }
+
   _registerAnotation() async {
     Anotacao anotacao =
         Anotacao(_title.text, _description.text, DateTime.now().toString());
-    int resultado = await _db.salvarAnotacao(anotacao);
-    print(resultado);
+    await _db.saveAnotations(anotacao);
+    _title.clear();
+    _description.clear();
+    setState(() {
+      myNotes.add(anotacao);
+    });
   }
 
   @override
@@ -71,7 +94,24 @@ class _Home extends State<Home> {
         title: Text('Minhas notas diárias'),
         backgroundColor: Colors.lightGreen,
       ),
-      body: Container(),
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            child: ListView.builder(
+              itemCount: myNotes.length,
+              itemBuilder: (context, index) {
+                final note = myNotes[index];
+                return Card(
+                  child: ListTile(
+                    title: Text(note.title),
+                    subtitle: Text("${note.data} - ${note.description}"),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.greenAccent,
         foregroundColor: Colors.white,
