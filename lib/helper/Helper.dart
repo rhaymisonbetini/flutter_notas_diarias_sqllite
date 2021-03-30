@@ -42,16 +42,33 @@ class Helper {
     await db.execute(sql);
   }
 
+  getAnotations() async {
+    var dataBase = await db;
+    String sql = "SELECT * FROM anotation ORDER BY data DESC";
+    List anotacoes = await dataBase.rawQuery(sql);
+    return anotacoes;
+  }
+
   Future<int> saveAnotations(Anotacao anotacao) async {
     var dataBase = await db;
     int resultado = await dataBase.insert('anotation', anotacao.toMap());
     return resultado;
   }
 
-  getAnotations() async {
+  Future<int> updateAnotations(Anotacao anotacao, int id) async {
     var dataBase = await db;
-    String sql = "SELECT * FROM anotation ORDER BY data DESC";
-    List anotacoes = await dataBase.rawQuery(sql);
-    return anotacoes;
+    String sql =
+        "UPDATE anotation SET title = ?, description = ? , data = ? WHERE id = ?";
+
+    int resultado = await dataBase.rawQuery(
+        sql, [anotacao.title, anotacao.description, anotacao.data, id]);
+    return resultado;
+  }
+
+  Future<int> deleteAnotation(int id) async {
+    var dataBase = await db;
+    String sql = "DELETE FROM anotation WHERE id = ?";
+    int resultado = await dataBase.rawQuery(sql, id);
+    return resultado;
   }
 }

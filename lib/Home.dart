@@ -21,8 +21,17 @@ class _Home extends State<Home> {
 
   TextEditingController _title = TextEditingController();
   TextEditingController _description = TextEditingController();
+  int anotationId;
 
-  _registerScreen() {
+  _registerScreen({Anotacao anotacao}) {
+    bool isEdit = false;
+    if (anotacao != null) {
+      _title.text = anotacao.title;
+      _description.text = anotacao.description;
+      anotationId = anotacao.id;
+      isEdit = true;
+    }
+
     showDialog(
       context: context,
       builder: (context) {
@@ -52,19 +61,33 @@ class _Home extends State<Home> {
               onPressed: () => Navigator.pop(context),
               child: Text('Cancelar'),
             ),
-            // ignore: deprecated_member_use
-            FlatButton(
-              onPressed: () {
-                _registerAnotation();
-                Navigator.pop(context);
-              },
-              child: Text('Adicionar'),
-            ),
+
+            !isEdit
+                ?
+                // ignore: deprecated_member_use
+                FlatButton(
+                    onPressed: () {
+                      _registerAnotation();
+                      Navigator.pop(context);
+                    },
+                    child: Text('Adicionar'),
+                  )
+                :
+                // ignore: deprecated_member_use
+                FlatButton(
+                    onPressed: () {
+                      _updateAnotation();
+                      Navigator.pop(context);
+                    },
+                    child: Text('Editar'),
+                  ),
           ],
         );
       },
     );
   }
+
+  _deleteScreen() {}
 
   _getAnotations() async {
     myNotes.clear();
@@ -84,9 +107,16 @@ class _Home extends State<Home> {
     await _db.saveAnotations(anotacao);
     _title.clear();
     _description.clear();
-    setState(() {
-      myNotes.add(anotacao);
-    });
+    _getAnotations();
+  }
+
+  _updateAnotation() async {
+    Anotacao anotacao = Anotacao(_title.text, _description.text,
+        _formatedDate(DateTime.now().toString()));
+    await _db.updateAnotations(anotacao, anotationId);
+    _title.clear();
+    _description.clear();
+    _getAnotations();
   }
 
   _formatedDate(date) {
@@ -95,6 +125,14 @@ class _Home extends State<Home> {
     DateTime converted = DateTime.parse(date);
     String formatedDate = formater.format(converted);
     return formatedDate;
+  }
+
+  _verifyDirection(DismissDirection direction, Anotacao anotacao) {
+    if (direction == DismissDirection.endToStart) {
+      _deleteScreen();
+    } else {
+      _registerScreen(anotacao: anotacao);
+    }
   }
 
   @override
@@ -111,10 +149,43 @@ class _Home extends State<Home> {
               itemCount: myNotes.length,
               itemBuilder: (context, index) {
                 final note = myNotes[index];
-                return Card(
-                  child: ListTile(
-                    title: Text(note.title),
-                    subtitle: Text("${note.data} - ${note.description}"),
+
+                return Dismissible(
+                  onDismissed: (direction) {
+                    _verifyDirection(direction, note);
+                  },
+                  direction: DismissDirection.horizontal,
+                  key: Key(DateTime.now().microsecondsSinceEpoch.toString()),
+                  background: Container(
+                    color: Colors.greenAccent,
+                    padding: EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                  secondaryBackground: Container(
+                    color: Colors.red,
+                    padding: EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                  child: Card(
+                    child: ListTile(
+                      title: Text(note.title),
+                      subtitle: Text("${note.data} - ${note.description}"),
+                    ),
                   ),
                 );
               },
